@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Management App</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Task Manager</h1>
+
+        <form method="POST" action="/add">
+            <div class="input-box">
+                <input type="text" name="task" placeholder="Enter Task" required>
+            </div>
+
+            <div class="input-group">
+                <label>Category</label>
+                <select name="category">
+                    <option value="Work">Work</option>
+                    <option value="Personal">Personal</option>
+                    <option value="Others">Others</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Priority</label>
+                <select name="priority">
+                    <option value="High">High</option>
+                    <option value="Medium">Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>Due Date</label>
+                <input type="date" name="due_date">
+            </div>
+
+            <button type="submit">Add Task</button>
+        </form>
+
+        <div class="task-list">
+            <h2>Task List</h2>
+            <ul>
+                {% for task in tasks %}
+                    <li class="{{ 'completed' if task['status'] == 'Completed' else '' }}">
+                        <span>{{ task['name'] }} - {{ task['category'] }} - {{ task['priority'] }}</span>
+                        {% if task['due_date'] %}
+                            <span>Due: {{ task['due_date'] }}</span>
+                        {% endif %}
+                        <div class="task-actions">
+                            {% if task['status'] != 'Completed' %}
+                                <a href="/update/{{ loop.index0 }}">Complete</a>
+                            {% endif %}
+                            <a href="/edit/{{ loop.index0 }}">Edit</a>
+                            <a href="/delete/{{ loop.index0 }}">Delete</a>
+                        </div>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+</body>
+</html>
