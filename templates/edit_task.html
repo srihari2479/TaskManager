@@ -3,36 +3,151 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Task</title>
+    <title>Task Manager Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Edit Task</h1>
-        <form method="POST" action="/update/{{ task_id }}">
-            <input type="text" name="task" value="{{ task['name'] }}" required placeholder="Enter task">
-            
-            <label for="category">Category:</label>
-            <select name="category">
-                <option value="Work" {% if task['category'] == 'Work' %} selected {% endif %}>Work</option>
-                <option value="Personal" {% if task['category'] == 'Personal' %} selected {% endif %}>Personal</option>
-                <option value="Others" {% if task['category'] == 'Others' %} selected {% endif %}>Others</option>
-            </select>
-            
-            <label for="priority">Priority:</label>
-            <select name="priority">
-                <option value="High" {% if task['priority'] == 'High' %} selected {% endif %}>High</option>
-                <option value="Medium" {% if task['priority'] == 'Medium' %} selected {% endif %}>Medium</option>
-                <option value="Low" {% if task['priority'] == 'Low' %} selected {% endif %}>Low</option>
-            </select>
-            
-            <label for="due_date">Due Date:</label>
-            <input type="date" name="due_date" value="{{ task['due_date'] }}">
-            
-            <button type="submit">Update Task</button>
-        </form>
+    <header class="header">
+        <div class="header-content">
+            <h1><i class="fas fa-tasks"></i> Task Manager Pro</h1>
+            <div class="header-actions">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search tasks...">
+                </div>
+                <button class="theme-toggle">🌙</button>
+            </div>
+        </div>
+    </header>
 
-        <a href="/" class="back-link">Back to Task List</a>
+    <div class="edit-container">
+        <div class="edit-form-wrapper">
+            <section class="task-preview">
+                <h3>Current Task</h3>
+                <div class="preview-card">
+                    <div class="preview-header">
+                        <div class="preview-priority priority-{{ task.priority.lower() }}">
+                            {% if task.priority == 'High' %}🔴{% elif task.priority == 'Medium' %}🟡{% else %}🟢{% endif %}
+                            {{ task.priority }}
+                        </div>
+                        <div class="task-category">
+                            {% if task.category == 'Work' %}
+                                <i class="fas fa-briefcase"></i>
+                            {% elif task.category == 'Personal' %}
+                                <i class="fas fa-user"></i>
+                            {% else %}
+                                <i class="fas fa-folder"></i>
+                            {% endif %}
+                            {{ task.category }}
+                        </div>
+                    </div>
+                    <div class="preview-content">
+                        <h4>{{ task.name }}</h4>
+                        {% if task.description %}
+                            <p>{{ task.description }}</p>
+                        {% endif %}
+                        {% if task.due_date != 'No Due Date' %}
+                            <div class="preview-due-date">
+                                <i class="fas fa-calendar-alt"></i> Due: {{ task.due_date|format_date }}
+                            </div>
+                        {% endif %}
+                        <div class="preview-status">
+                            <i class="fas fa-{{ 'check-circle' if task.status == 'Completed' else 'clock' }}"></i> Status: {{ task.status }}
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="edit-form-section">
+                <h3>Edit Details</h3>
+                <form class="edit-form" action="/edit/{{ task.id }}" method="POST">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="task"><i class="fas fa-tasks"></i> Task Name</label>
+                            <input type="text" id="task" name="task" class="form-input" value="{{ task.name }}" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="category"><i class="fas fa-folder"></i> Category</label>
+                            <select id="category" name="category" class="form-select" required>
+                                <option value="Work" {{ 'selected' if task.category == 'Work' }}>🏢 Work</option>
+                                <option value="Personal" {{ 'selected' if task.category == 'Personal' }}>👤 Personal</option>
+                                <option value="Others" {{ 'selected' if task.category == 'Others' }}>📁 Others</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="priority"><i class="fas fa-exclamation"></i> Priority</label>
+                            <select id="priority" name="priority" class="form-select" required>
+                                <option value="High" {{ 'selected' if task.priority == 'High' }}>🔴 High Priority</option>
+                                <option value="Medium" {{ 'selected' if task.priority == 'Medium' }}>🟡 Medium Priority</option>
+                                <option value="Low" {{ 'selected' if task.priority == 'Low' }}>🟢 Low Priority</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="due_date"><i class="fas fa-calendar-alt"></i> Due Date</label>
+                            <input type="date" id="due_date" name="due_date" class="form-input" value="{{ task.due_date if task.due_date != 'No Due Date' else '' }}">
+                            <p class="form-help">Leave empty for no due date</p>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="description"><i class="fas fa-align-left"></i> Description</label>
+                        <textarea id="description" name="description" class="form-textarea">{{ task.description or '' }}</textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Update Task</button>
+                        <a href="/" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</a>
+                        <button type="button" class="btn btn-danger delete-btn" data-task-id="{{ task.id }}"><i class="fas fa-trash"></i> Delete Task</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+
+        <section class="task-timeline">
+            <h3>Task Timeline</h3>
+            <div class="timeline">
+                <div class="timeline-item">
+                    <div class="timeline-icon created">
+                        <i class="fas fa-plus"></i>
+                    </div>
+                    <div class="timeline-content">
+                        <h4>Task Created</h4>
+                        <p>{{ task.created_at[:19] | replace('T', ' ') if task.created_at else 'Unknown' }}</p>
+                    </div>
+                </div>
+                {% if task.completed_at %}
+                    <div class="timeline-item">
+                        <div class="timeline-icon completed">
+                            <i class="fas fa-check"></i>
+                        </div>
+                        <div class="timeline-content">
+                            <h4>Task Completed</h4>
+                            <p>{{ task.completed_at[:19] | replace('T', ' ') }}</p>
+                        </div>
+                    </div>
+                {% endif %}
+            </div>
+        </section>
     </div>
+
+    <div class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-trash"></i> Confirm Delete</h3>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this task? This action cannot be undone.</p>
+                <p class="task-name">{{ task.name }}</p>
+                <p class="task-meta">{{ task.category }} • {{ task.priority }} Priority</p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger confirm-delete" data-task-id="{{ task.id }}"><i class="fas fa-trash"></i> Delete</button>
+                <button class="btn btn-secondary cancel-delete"><i class="fas fa-times"></i> Cancel</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 </body>
 </html>

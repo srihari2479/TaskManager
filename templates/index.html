@@ -3,63 +3,166 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Task Management App</title>
+    <title>Task Manager Pro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
     <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Task Manager</h1>
-
-        <form method="POST" action="/add">
-            <div class="input-box">
-                <input type="text" name="task" placeholder="Enter Task" required>
+    <header class="header">
+        <div class="header-content">
+            <h1><i class="fas fa-tasks"></i> Task Manager Pro</h1>
+            <div class="header-actions">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="search-input" placeholder="Search tasks...">
+                </div>
+                <button class="theme-toggle">🌙</button>
             </div>
+        </div>
+    </header>
 
-            <div class="input-group">
-                <label>Category</label>
-                <select name="category">
-                    <option value="Work">Work</option>
-                    <option value="Personal">Personal</option>
-                    <option value="Others">Others</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label>Priority</label>
-                <select name="priority">
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
-                </select>
-            </div>
-
-            <div class="input-group">
-                <label>Due Date</label>
-                <input type="date" name="due_date">
-            </div>
-
-            <button type="submit">Add Task</button>
-        </form>
-
-        <div class="task-list">
-            <h2>Task List</h2>
-            <ul>
-                {% for task in tasks %}
-                    <li class="{{ 'completed' if task['status'] == 'Completed' else '' }}">
-                        <span>{{ task['name'] }} - {{ task['category'] }} - {{ task['priority'] }}</span>
-                        {% if task['due_date'] %}
-                            <span>Due: {{ task['due_date'] }}</span>
-                        {% endif %}
-                        <div class="task-actions">
-                            {% if task['status'] != 'Completed' %}
-                                <a href="/update/{{ loop.index0 }}">Complete</a>
-                            {% endif %}
-                            <a href="/edit/{{ loop.index0 }}">Edit</a>
-                            <a href="/delete/{{ loop.index0 }}">Delete</a>
+    <div class="main-container">
+        <aside class="sidebar">
+            <div class="stats-section">
+                <h3>Overview</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon total"><i class="fas fa-tasks"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number total">{{ stats.total }}</span>
+                            <span class="stat-label">Total</span>
                         </div>
-                    </li>
-                {% endfor %}
-            </ul>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon completed"><i class="fas fa-check-circle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number completed">{{ stats.completed }}</span>
+                            <span class="stat-label">Completed</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon pending"><i class="fas fa-clock"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number pending">{{ stats.pending }}</span>
+                            <span class="stat-label">Pending</span>
+                        </div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon overdue"><i class="fas fa-exclamation-triangle"></i></div>
+                        <div class="stat-info">
+                            <span class="stat-number overdue">{{ stats.overdue }}</span>
+                            <span class="stat-label">Overdue</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="filters-section">
+                <h3>Filters</h3>
+                <div class="filter-group">
+                    <h4>Status</h4>
+                    <button class="filter-btn active" data-filter="all"><i class="fas fa-list"></i> All Tasks</button>
+                    <button class="filter-btn" data-filter="pending"><i class="fas fa-clock"></i> Pending</button>
+                    <button class="filter-btn" data-filter="completed"><i class="fas fa-check-circle"></i> Completed</button>
+                    <button class="filter-btn" data-filter="overdue"><i class="fas fa-exclamation-triangle"></i> Overdue</button>
+                </div>
+                <div class="filter-group">
+                    <h4>Category</h4>
+                    <button class="filter-btn" data-filter="Work"><i class="fas fa-briefcase"></i> Work</button>
+                    <button class="filter-btn" data-filter="Personal"><i class="fas fa-user"></i> Personal</button>
+                    <button class="filter-btn" data-filter="Others"><i class="fas fa-folder"></i> Others</button>
+                </div>
+                <div class="filter-group">
+                    <h4>Priority</h4>
+                    <button class="filter-btn" data-filter="High"><i class="fas fa-circle priority-high"></i> High</button>
+                    <button class="filter-btn" data-filter="Medium"><i class="fas fa-circle priority-medium"></i> Medium</button>
+                    <button class="filter-btn" data-filter="Low"><i class="fas fa-circle priority-low"></i> Low</button>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <div class="flash-messages">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="flash-message flash-{{ category }}">
+                                <i class="fas fa-{{ 'check-circle' if category == 'success' else 'exclamation-circle' if category == 'error' else 'info-circle' }}"></i>
+                                {{ message }}
+                                <button class="flash-close">&times;</button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+            </div>
+
+            <section class="add-task-section">
+                <button class="add-task-btn"><i class="fas fa-plus"></i> Add New Task</button>
+                <div class="task-form-container">
+                    <form class="task-form">
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="task"><i class="fas fa-tasks"></i> Task Name</label>
+                                <input type="text" id="task" name="task" class="form-input" required>
+                            </div>
+                            <div class="form-group">
+                                <label for="category"><i class="fas fa-folder"></i> Category</label>
+                                <select id="category" name="category" class="form-select" required>
+                                    <option value="Work">🏢 Work</option>
+                                    <option value="Personal">👤 Personal</option>
+                                    <option value="Others">📁 Others</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="priority"><i class="fas fa-exclamation"></i> Priority</label>
+                                <select id="priority" name="priority" class="form-select" required>
+                                    <option value="High">🔴 High Priority</option>
+                                    <option value="Medium">🟡 Medium Priority</option>
+                                    <option value="Low">🟢 Low Priority</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="due_date"><i class="fas fa-calendar-alt"></i> Due Date</label>
+                                <input type="date" id="due_date" name="due_date" class="form-input">
+                                <p class="form-help">Leave empty for no due date</p>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label for="description"><i class="fas fa-align-left"></i> Description</label>
+                            <textarea id="description" name="description" class="form-textarea"></textarea>
+                        </div>
+                        <div class="form-actions">
+                            <button type="submit" class="btn btn-primary"><i class="fas fa-plus"></i> Add Task</button>
+                            <button type="button" class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+
+            <section class="task-list-section">
+                <div class="section-header">
+                    <h2>Tasks</h2>
+                </div>
+                <div class="task-list"></div>
+            </section>
+        </main>
+    </div>
+
+    <div class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3><i class="fas fa-trash"></i> Confirm Delete</h3>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to delete this task? This action cannot be undone.</p>
+                <p class="task-name"></p>
+                <p class="task-meta"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-danger"><i class="fas fa-trash"></i> Delete</button>
+                <button class="btn btn-secondary"><i class="fas fa-times"></i> Cancel</button>
+            </div>
         </div>
     </div>
 
